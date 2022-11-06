@@ -1,113 +1,125 @@
 import java.awt.Font;
 import java.awt.Frame;
-import java.awt.event.*;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.*;
 
-import javax.swing.*;  
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 
-public class start
-{
-	private JLabel label_title;
+public class update {
+	
+	private JLabel label_aadhar,res;
+	private JTextField aadhar;
+	private JButton update,back;
+	
+	long aadhar_no;
+	int age,dose;
+	String city,name,vaccine_name;
+	
 	
 	//creating variables for mysql setup
-	public static final String driver = "com.mysql.cj.jdbc.Driver";
-	public static final String url = "jdbc:mysql://localhost:3306/vaccine_records_db";
-	public static final String username = "root";
-	public static final String password = "sakshipatil_30";
+			public static final String driver = "com.mysql.cj.jdbc.Driver";
+			public static final String url = "jdbc:mysql://localhost:3306/vaccine_records_db";
+			public static final String username = "root";
+			public static final String password = "sakshipatil_30";
+			
+			static Connection con = null;
 	
-	static Connection con = null;
-	static Statement get_data = null;  
-	
-	start()
+	update()
 	{
-		Frame f=new JFrame();//creating instance of JFrame  
+		Frame f=new JFrame();
 		
-		//instantiating all the components to be added on to the frame
-		
-		label_title = new JLabel("Vaccination Records");
-		label_title.setFont(new Font("Arial", Font.PLAIN, 30));
-		label_title.setSize(300, 30);
-		label_title.setLocation(100, 30);
-		f.add(label_title);
-        
-		JButton register=new JButton("Register");
-		JButton update=new JButton("Update");
-		JButton delete=new JButton("Delete");
-		JButton show_records=new JButton("View records");
+		 label_aadhar = new JLabel("Aadhar no");
+		 label_aadhar.setFont(new Font("Arial", Font.PLAIN, 20));
+		 label_aadhar.setSize(100, 20);
+		 label_aadhar.setLocation(50, 100);
+		 f.add(label_aadhar);
 
-		register.setBounds(130,100,180, 40);//x axis, y axis, width, height  
-		update.setBounds(130,170,180, 40);
-		delete.setBounds(130,240,180, 40);
-		show_records.setBounds(130,310,180, 40);
-          
-		//adding button in JFrame  
-		f.add(register);
-		f.add(update);
-		f.add(delete);
-		f.add(show_records);
-          
-		f.setSize(500,500);//400 width and 500 height  
+		 aadhar = new JTextField();
+		 aadhar.setFont(new Font("Arial", Font.PLAIN, 15));
+		 aadhar.setSize(190, 20);
+		 aadhar.setLocation(150, 150);
+		 f.add(aadhar);
+		 
+		 update = new JButton("Update");
+		 update.setBounds(180,200,80, 40);
+		 f.add(update);
+		 
+		 back=new JButton("back");
+		 back.setBounds(10,10,80, 18);//x axis, y axis, width, height  
+		 f.add(back);//adding button in JFrame  
+			
+		 res = new JLabel();
+		 label_aadhar.setFont(new Font("Arial", Font.PLAIN, 20));
+		 label_aadhar.setSize(100, 20);
+		 label_aadhar.setLocation(200, 100);
+		 f.add(res);
+			          
+		f.setSize(400,500);//400 width and 500 height  
 		f.setLayout(null);//using no layout managers  
 		f.setVisible(true);//making the frame visible  
 		
-		register.addActionListener(new ActionListener() {
+		back.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				f.dispose();
-				new register();
+				new start();
 				}
 			});
 		
 		update.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				f.dispose();
-				new update();
-				}
-			});
-		delete.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				f.dispose();
-				new delete();
-				}
-			});
-		show_records.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				get_records();
-			}
-			});
-		
-	}
-	public static void main(String[] args) 
-	{  
-		new start();
-	}
-	static	public void get_records()
-	{
-		
-		try {
-		
-			//registering driver
-			Class.forName(driver);
 				
-			//opening the connection
-			con = DriverManager.getConnection(url,username,password);
-			
-			System.out.println("Aadhar no\t\tName\t\t\tAge\t\tCity\t\tVaccine name\t\t\tDose");
-			
-			get_data = con.createStatement();
-			
-			ResultSet records = get_data.executeQuery("select * from vaccine_records");
-			
-			//displaying records
-			while(records.next())
-			{
-				System.out.println("\n"+records.getInt(1)+"\t\t"+records.getString(2)+"\t\t"+records.getInt(3)+"\t\t"+records.getString(4)+"\t\t"+records.getString(5)+"\t\t\t"+records.getInt(6));
-			}
-			
-		}catch(Exception ee) {}
-		
+				aadhar_no = Long.parseLong(aadhar.getText());
+				
+				try {
+					Class.forName(driver);
+					
+					con = DriverManager.getConnection(url,username,password);
+					
+					PreparedStatement pstmt = con.prepareStatement("select * from vaccine_records where aadhar = ?");
+					pstmt.setDouble(1, aadhar_no);
+					ResultSet rs = pstmt.executeQuery();
+					
+					while(rs.next())
+					{
+						if(rs.getString(1)==null)
+						{
+							System.out.println("No record found");
+							
+						}else {
+							
+							CallableStatement get_records = con.prepareCall("{call get_record_procedure(?,?,?,?,?,?)}");
+							get_records.setDouble(1, aadhar_no);
+							get_records.registerOutParameter(2,java.sql.Types.VARCHAR);
+							get_records.registerOutParameter(3,java.sql.Types.INTEGER);
+							get_records.registerOutParameter(4,java.sql.Types.VARCHAR);
+							get_records.registerOutParameter(5,java.sql.Types.VARCHAR);
+							get_records.registerOutParameter(6,java.sql.Types.INTEGER);
+							
+							get_records.executeUpdate();
+							
+								name  = get_records.getString(2);
+								age = get_records.getInt(3);
+								city = get_records.getString(4);
+								vaccine_name = get_records.getString(5);
+								dose = get_records.getInt(6);
+								
+								f.dispose();
+								new display(aadhar_no ,name,age,city, vaccine_name, dose);
+						}
+					}
+					
+				} catch (ClassNotFoundException | SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				}
+			});
 	}
+	
 
-}  
+}
